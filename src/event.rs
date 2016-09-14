@@ -3,98 +3,342 @@
 use std::io::{Error, ErrorKind};
 use std::ascii::AsciiExt;
 use std::str;
+use std::fmt;
 
-/// An event reported by the terminal.
+///En An event reported by the terminal
+///De Ein Ereignis wurde vom Terminal gebracht
+///Fr Un événement a été rapporté par le terminal
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Event {
-    /// A key press.
+    ///En A keyboard key press
+    ///De Eine Tastaturtaste Druck
+    ///Fr Appui d'une touche de clavier
     Key(Key),
-    /// A mouse button press, release or wheel use at specific coordinates.
+
+    ///En A mouse button press, release or wheel use at specific coordinates.
+    ///De Eine Mousetaste Druck
+    ///Fr Appui d'une touche de clavier
     Mouse(MouseEvent),
-    /// An event that cannot currently be evaluated.
+
+    ///En An event that cannot currently be evaluated.
+    ///De Eine Tastaturtaste Druck
+    ///Fr Appui d'une touche de clavier
     Unsupported,
 }
 
-/// A mouse related event.
+///En A mouse related event
+///De Ein Mouseereignis
+///Fr Un événement de souris
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum MouseEvent {
-    /// A mouse button was pressed.
-    ///
-    /// The coordinates are one-based.
+    ///En A mouse button was pressed, the coordinates are one-based
+    ///De Ein Mousetaste gedrückt ist
+    ///Fr Un bouton de souris est appuyé
     Press(MouseButton, u16, u16),
-    /// A mouse button was released.
-    ///
-    /// The coordinates are one-based.
+
+    ///En A mouse button was released, the coordinates are one-based
+    ///De Ein Mousetaste losgelassen ist
+    ///Fr Un bouton de souris est relâché
     Release(u16, u16),
-    /// A mouse button is held over the given coordinates.
-    ///
-    /// The coordinates are one-based.
-    Hold(u16, u16),
+
+    ///En A mouse button is held down, the coordinates are one-based
+    ///De Ein Mousetaste gedrückt gehalten ist
+    ///Fr Un bouton de souris est maintenu appuyé
+    Drag(MouseButton, u16, u16),
 }
 
-/// A mouse button.
+///En A mouse button
+///De Ein Mousetaste
+///Fr Un bouton de souris
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum MouseButton {
-    /// The left mouse button.
+
+    /*  ****  CLICK ONLY  ****  */
+
+    ///En The left mouse button is pressed
+    ///De Die Linksmousetaste ist gedrückt
+    ///Fr Le bouton gauche de la souris est appuyé
     Left,
-    /// The right mouse button.
+
+    ///En The right mouse button is pressed
+    ///De Die Rechtsmousetaste ist gedrückt
+    ///Fr Le bouton droit de la souris est appuyé
     Right,
-    /// The middle mouse button.
-    Middle,
-    /// Mouse wheel is going up.
-    ///
-    /// This event is typically only used with Mouse::Press.
+
+    ///En The mouse wheel button is pressed
+    ///De Das Mausradtaste ist gedrückt
+    ///Fr Le bouton molette de la souris est appuyé
+    Wheel,
+
+    ///En The mouse wheel is going up
+    ///De Die Mousrad geht nach oben
+    ///Fr La molette est tournée vers le haut
     WheelUp,
-    /// Mouse wheel is going down.
-    ///
-    /// This event is typically only used with Mouse::Press.
+
+    ///En The mouse wheel is going down
+    ///De Die Mouserad geht nach unten
+    ///Fr La molette est tournée vers le bas
     WheelDown,
+
+
+    /*  **********  AJOUTS D'EVENEMENTS **********  */
+
+
+    /*  ****  DRAG ONLY  ****  */
+
+    ///En The left mouse button is held while moving pointer
+    ///De Die Linksmousetaste ist gehalten, wenn der Mauszeiger bewegt
+    ///Fr Le bouton gauche de la souris est maintenu en déplaçant le pointeur
+    LeftDrag,
+
+    ///En The wheel mouse button is held while moving pointer
+    ///De Die Mouseradtaste ist gehalten, wenn der Mauszeiger bewegt
+    ///Fr Le bouton molette est maintenu en déplaçant le pointeur
+    WheelDrag,
+
+    ///En The right mouse button is held while moving pointer
+    ///De Die Rechtsmousetaste ist gehalten, wenn der Mauszeiger bewegt
+    ///Fr Le bouton droit de la souris est maintenu en déplaçant le pointeur
+    RightDrag,
+
+    /*  ****  SHIFT CLICK  ****  */
+
+    ///En The left mouse button is pressed while helding Shift
+    ///De Die Linksmousetaste ist gedrückt, wenn Shift gehalten ist
+    ///Fr Le bouton gauche de la souris est appuyé quand Shift est maintenu
+    ShiftLeft,
+
+    ///En The wheel mouse button is pressed while helding Shift
+    ///De Die Mouseradtaste ist gedrückt, wenn Shift gehalten ist
+    ///Fr Le bouton molette est appuyé quand Shift est maintenu
+    ShiftWheel,
+
+    ///En The right mouse button is pressed while helding Shift
+    ///De Die Rechtsmousetaste ist gedrückt, wenn Shift gehalten ist
+    ///Fr Le bouton droit de la souris est appuyé quand Shift est maintenu
+    ShiftRight,
+
+    /*  *****  SHIFT DRAG   *****  */
+
+    ///En The left mouse button and Shift are held while moving pointer
+    ///De Die Linksmousetaste und Shift sind gehalten, wenn der Mauszeiger
+    ///De bewegt
+    ///Fr Le bouton gauche de la souris et Shift sont maintenus en déplaçant
+    ///Fr le pointeur
+    ShiftLeftDrag,
+
+    ///En The wheel mouse button and Shift are held while moving pointer
+    ///De Die Mouseradtaste und Shift sind gehalten, wenn der Mauszeiger bewegt
+    ///Fr Le bouton molette et Shift sont maintenus en déplaçant le pointeur
+    ShiftWheelDrag,
+
+    ///En The right mouse button and Shift are held while moving pointer
+    ///De Die Rechtsmousetaste und Shift sind gehalten, wenn der Mauszeiger 
+    ///De bewegt
+    ///Fr Le bouton droit de la souris et Shift sont maintenu en déplaçant
+    ///Fr le pointeur
+    ShiftRightDrag,
+
+    /*  ****  CTRL CLICK  ****  */
+
+    ///En The left mouse button is pressed while helding Ctrl
+    ///De Die Linksmousetaste ist gedrückt, wenn Strg gehalten ist
+    ///Fr Le bouton gauche de la souris est appuyé quand Ctrl est maintenu
+    CtrlLeft,
+
+    ///En The wheel mouse button is pressed while helding Ctrl
+    ///De Die Mouseradtaste ist gedrückt, wenn Strg gehalten ist
+    ///Fr Le bouton molette est appuyé quand Ctrl est maintenu
+    CtrlWheel,
+
+    ///En The right mouse button is pressed while helding Ctrl 
+    ///De Die Rechtsmousetaste ist gedrückt, wenn Strg gehalten ist
+    ///Fr Le bouton droit de la souris est appuyé quand Ctrl est maintenu
+    CtrlRight,
+
+    ///En The mouse wheel is going up while helding Ctrl 
+    ///De Die Mousrad geht nach oben, wenn Strg gehalten ist
+    ///Fr La molette est tournée vers le haut quand Ctrl est maintenu
+    CtrlWheelUp,
+
+    ///En The mouse wheel is going down while helding Ctrl 
+    ///De Die Mousrad geht nach unten, wenn Strg gehalten ist
+    ///Fr La molette est tournée vers le bas quand Ctrl est maintenu
+    CtrlWheelDown,
+
+    /*  *****  CTRL DRAG  *****  */
+
+    ///En The left mouse button and Ctrl are held while moving pointer
+    ///De Die Linksmousetaste und Strg sind gehalten, wenn der Mauszeiger bewegt
+    ///Fr Le bouton gauche de la souris et Ctrl sont maintenus en déplaçant
+    ///Fr le pointeur
+    CtrlLeftDrag,
+
+    ///En The wheel mouse button and Ctrl are held while moving pointer
+    ///De Die Mouseradtaste und Strg sind gehalten, wenn der Mauszeiger bewegt
+    ///Fr Le bouton molette et Ctrl sont maintenus en déplaçant le pointeur
+    CtrlWheelDrag,
+
+    ///En The right mouse button and Ctrl are held while moving pointer
+    ///De Die Rechtsmousetaste und Strg sind gehalten, wenn der Mauszeiger
+    ///De bewegt
+    ///Fr Le bouton droit de la souris et Ctrl sont maintenu en déplaçant
+    ///Fr le pointeur
+    CtrlRightDrag,
+
+    /*  ** CTRL SHIFT CLICK **  */
+
+    ///En The left mouse button is pressed while Ctrl and Shift are held
+    ///De Die Linksmousetaste ist gedrückt, wenn Strg und Shift gehalten sind
+    ///Fr Le bouton gauche de la souris est appuyé quand Ctrl et Shift
+    ///Fr sont maintenus
+    ShiftCtrlLeft,
+
+    ///En The wheel mouse button is pressed while Ctrl and Shift are held
+    ///De Die Mouseradtaste ist gedrückt, wenn Strg und Shift gehalten sind
+    ///Fr Le bouton molette est appuyé quand Ctrl et Shift sont maintenus
+    ShiftCtrlWheel,
+
+    ///En The right mouse button is pressed while Ctrl and Shift are held
+    ///De Die Rechtsmousetaste ist gedrückt, wenn Strg und Shift gehalten sind
+    ///Fr Le bouton droit de la souris est appuyé quand Ctrl et Shift
+    ///Fr sont maintenus
+    ShiftCtrlRight,
+
+    /*  *** CTRL SHIFT DRAG ***  */
+
+    ///En The left mouse button, Ctrl and Shift are held while moving pointer
+    ///De Die Linksmousetaste, Strg und Shift sind gehalten, wenn der
+    ///De Mauszeiger bewegt
+    ///Fr Le bouton gauche de la souris, Ctrl et Shift sont maintenus 
+    ///Fr en déplaçant le pointeur
+    ShiftCtrlLeftDrag,
+
+    ///En The wheel mouse button, Ctrl and Shift are held while moving pointer
+    ///De Die Mouseradtaste, Strg und Shift sind gehalten, wenn der
+    ///De Mauszeiger bewegt
+    ///Fr Le bouton molette, Ctrl et Shift sont maintenus en déplaçant 
+    ///Fr le pointeur
+    ShiftCtrlWheelDrag,
+
+    ///En The right mouse button, Ctrl and Shift are held while moving pointer
+    ///De Die Rechtsmousetaste, Strg und Shift sind gehalten, wenn der
+    ///De Mauszeiger bewegt
+    ///Fr Le bouton droit de la souris, Ctrl et Shift sont maintenu en déplaçant
+    ///Fr le pointeur
+    ShiftCtrlRightDrag,
+
+
+    /*  **********  AJOUTS D'EVENEMENTS **********  */
 }
 
-/// A key.
+///En A keyboard key
+///De Ein Tastaturtaste
+///Fr Une touche du clavier
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Key {
-    /// Backspace.
+    ///En Backspace
+    ///De Rücktaste
+    ///Fr Retour arrière
     Backspace,
-    /// Left arrow.
+
+    ///En Left arrow
+    ///De Linkepfeil
+    ///Fr Flèche de gauche
     Left,
-    /// Right arrow.
+
+    ///En Right arrow
+    ///De Rechtepfeil
+    ///Fr Flèche de droite
     Right,
-    /// Up arrow.
+
+    ///En Up arrow
+    ///De Obenpfeil
+    ///Fr Flèche du haut
     Up,
-    /// Down arrow.
+
+    ///En Down arrow
+    ///De Untenpfeil
+    ///Fr Flèche du bas
     Down,
-    /// Home key.
+
+    ///En Home key
+    ///De "Home"-Taste
+    ///Fr Touche "Home"
     Home,
-    /// End key.
+
+    ///En End key
+    ///De Endetaste
+    ///Fr Touche Fin
     End,
-    /// Page Up key.
+
+    ///En Page Up key
+    ///De "Page Up"-taste
+    ///Fr Touche "Page Up"
     PageUp,
-    /// Page Down key.
+
+    ///En Page Down key
+    ///De "Page Down"-taste
+    ///Fr Touche "Page Down"
     PageDown,
-    /// Delete key.
+
+    ///En Delete key
+    ///De "Delete"-taste
+    ///Fr Touche Suppr
     Delete,
-    /// Insert key.
+
+    ///En Insert key
+    ///De "Insert"-taste
+    ///Fr Touche "Insert"
     Insert,
-    /// Function keys.
-    ///
-    /// Only function keys 1 through 12 are supported.
+
+    ///En Function keys
+    ///En Only function keys 1 through 12 are supported.
+    ///De Funktiontasten
+    ///De Nur Funktiontasten um 1 zu 12 sind getragen.
+    ///Fr Touches de fonctions
+    ///Fr Seules les touches de fonctions 1 à 12 sont prises en charge.
     F(u8),
-    /// Normal character.
+
+    ///En A normal character
+    ///De Ein Normalcharakter
+    ///Fr Un caractère normal
     Char(char),
-    /// Alt modified character.
+
+    ///En A character used with Alt
+    ///De Ein Charakter mit Alt benutzt
+    ///Fr Un caractère utilisé avec Alt
     Alt(char),
-    /// Ctrl modified character.
-    ///
-    /// Note that certain keys may not be modifiable with `ctrl`, due to limitations of terminals.
+
+    ///En A character used with Ctrl
+    ///En Note that certain keys may not be modifiable with `ctrl`, 
+    ///En due to limitations of terminals.
+    ///De Ein Charakter mit Strg benutzt
+    ///De Sie müßen notifiziert, daß ein Bißchen von Tasten wurde nicht mit
+    ///De Strg ändern, wegen die Grenze des Terminal.
+    ///Fr Un caractère utilisé avec Ctrl
+    ///Fr Vous noterez que certaines touches ne sont pas modifiées par Ctrl,
+    ///Fr dû aux limitations du terminal.
     Ctrl(char),
-    /// Null byte.
+
+    ///En Esc key
+    ///De Esc-taste
+    ///Fr Bouton Échap
+    Esc,
+
+    ///En Null byte
+    ///De Null-Byte
+    ///Fr Octet nul
     Null,
 
     #[allow(missing_docs)]
     #[doc(hidden)]
     __IsNotComplete
 }
+
+impl fmt::Display for Key
+{ fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
+      { write!(f, "{}", self) }}
 
 /// Parse an Event from `item` and possibly subsequent bytes through `iter`.
 pub fn parse_event<I>(item: Result<u8, Error>, iter: &mut I) -> Result<Event, Error>
@@ -136,14 +380,14 @@ where I: Iterator<Item = Result<u8, Error>>
                                     if cb & 0x40 != 0 {
                                         MouseEvent::Press(MouseButton::WheelDown, cx, cy)
                                     } else {
-                                        MouseEvent::Press(MouseButton::Middle, cx, cy)
+                                        MouseEvent::Press(MouseButton::Wheel, cx, cy)
                                     }
                                 }
                                 2 => MouseEvent::Press(MouseButton::Right, cx, cy),
                                 3 => MouseEvent::Release(cx, cy),
                                 _ => return error,
                             })
-                        },
+                        }
                         Some(Ok(b'<')) => {
                             // xterm mouse encoding:
                             // ESC [ < Cb ; Cx ; Cy ; (M or m)
@@ -157,34 +401,70 @@ where I: Iterator<Item = Result<u8, Error>>
                                     c = iter.next().unwrap().unwrap();
                                 }
                             let str_buf = String::from_utf8(buf).unwrap();
-                            let nums = &mut str_buf.split(';');
+                            let ref mut nums = str_buf.split(';');
 
                             let cb = nums.next().unwrap().parse::<u16>().unwrap();
                             let cx = nums.next().unwrap().parse::<u16>().unwrap();
                             let cy = nums.next().unwrap().parse::<u16>().unwrap();
 
-                            let event = match cb {
-                                0...2 | 64...65 => {
-                                    let button = match cb {
-                                        0 => MouseButton::Left,
-                                        1 => MouseButton::Middle,
-                                        2 => MouseButton::Right,
-                                        64 => MouseButton::WheelUp,
-                                        65 => MouseButton::WheelDown,
-                                        _ => return error,
-                                    };
-                                    match c {
-                                        b'M' => MouseEvent::Press(button, cx, cy),
-                                        b'm' => MouseEvent::Release(cx, cy),
-                                        _ => return error,
-                                    }
-                                }
-                                32 => MouseEvent::Hold(cx, cy),
+                            let button = match cb {
+
+                                ///Click
+                                0 => MouseButton::Left,
+                                1 => MouseButton::Wheel,
+                                2 => MouseButton::Right,
+                                64 => MouseButton::WheelUp,
+                                65 => MouseButton::WheelDown,
+
+                            /*  **********  AJOUTS D'EVENEMENTS **********  */
+
+                                ///Drag
+                                32 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::LeftDrag, cx, cy))) ,
+                                33 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::WheelDrag, cx, cy))) ,
+                                34 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::RightDrag, cx, cy))) ,
+
+                                ///Shift Click
+                                4 => MouseButton::ShiftLeft,
+                                5 => MouseButton::ShiftWheel,
+                                6 => MouseButton::ShiftRight,
+
+                                ///Shift Drag
+                                36 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::ShiftLeftDrag, cx, cy))) ,
+                                37 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::ShiftWheelDrag, cx, cy))) ,
+                                38 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::ShiftRightDrag, cx, cy))) ,
+
+                                ///Control Click
+                                16 => MouseButton::CtrlLeft,
+                                17 => MouseButton::CtrlWheel,
+                                18 => MouseButton::CtrlRight,
+                                80 => MouseButton::CtrlWheelUp,
+                                81 => MouseButton::CtrlWheelDown,
+
+                                ///Control Drag
+                                48 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::CtrlLeftDrag, cx, cy))) ,
+                                49 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::CtrlWheelDrag, cx, cy))) ,
+                                50 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::CtrlRightDrag, cx, cy))) ,
+
+                                ///Control Shift Click
+                                20 => MouseButton::ShiftCtrlLeft,
+                                21 => MouseButton::ShiftCtrlWheel,
+                                22 => MouseButton::ShiftCtrlRight,
+
+                                ///Control Shift Drag
+                                52 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::ShiftCtrlLeftDrag, cx, cy))) ,
+                                53 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::ShiftCtrlWheelDrag, cx, cy))) ,
+                                54 => return Ok(Event::Mouse(MouseEvent::Drag(MouseButton::ShiftCtrlRightDrag, cx, cy))) ,
+
+                            /*  **********  AJOUTS D'EVENEMENTS **********  */
+
                                 _ => return error,
                             };
-
-                            Event::Mouse(event)
-                        },
+                            Event::Mouse(match c {
+                                b'M' => MouseEvent::Press(button, cx, cy),
+                                b'm' => MouseEvent::Release(cx, cy),
+                                _ => return error,
+                            })
+                        }
                         Some(Ok(c @ b'0'...b'9')) => {
                             // Numbered escape code.
                             let mut buf = Vec::new();
@@ -203,7 +483,7 @@ where I: Iterator<Item = Result<u8, Error>>
                                 // ESC [ Cb ; Cx ; Cy ; M
                                 b'M' => {
                                     let str_buf = String::from_utf8(buf).unwrap();
-                                    let nums = &mut str_buf.split(';');
+                                    let ref mut nums = str_buf.split(';');
 
                                     let cb = nums.next().unwrap().parse::<u16>().unwrap();
                                     let cx = nums.next().unwrap().parse::<u16>().unwrap();
@@ -211,11 +491,11 @@ where I: Iterator<Item = Result<u8, Error>>
 
                                     let event = match cb {
                                         32 => MouseEvent::Press(MouseButton::Left, cx, cy),
-                                        33 => MouseEvent::Press(MouseButton::Middle, cx, cy),
+                                        33 => MouseEvent::Press(MouseButton::Wheel, cx, cy),
                                         34 => MouseEvent::Press(MouseButton::Right, cx, cy),
                                         35 => MouseEvent::Release(cx, cy),
-                                        64 => MouseEvent::Hold(cx, cy),
-                                        96 |
+                                        64 => MouseEvent::Drag(MouseButton::LeftDrag, cx, cy),
+                                        96 => MouseEvent::Press(MouseButton::WheelUp, cx, cy),
                                         97 => MouseEvent::Press(MouseButton::WheelUp, cx, cy),
                                         _ => return error,
                                     };
@@ -237,10 +517,10 @@ where I: Iterator<Item = Result<u8, Error>>
                                         v @ 23...24 => Event::Key(Key::F(v - 12)),
                                         _ => return error,
                                     }
-                                },
+                                }
                                 _ => return error,
                             }
-                        },
+                        }
                         _ => return error,
                     }
                 }
@@ -276,13 +556,14 @@ fn parse_utf8_char<I>(c: u8, iter: &mut I) -> Result<char, Error>
     if c.is_ascii() {
         Ok(c as char)
     } else {
-        let bytes = &mut Vec::new();
+        let ref mut bytes = Vec::new();
         bytes.push(c);
 
         loop {
             bytes.push(iter.next().unwrap().unwrap());
-            if let Ok(st) = str::from_utf8(bytes) {
-                return Ok(st.chars().next().unwrap())
+            match str::from_utf8(bytes) {
+                Ok(st) => return Ok(st.chars().next().unwrap()),
+                Err(_) => {},
             }
             if bytes.len() >= 4 { return error; }
         }

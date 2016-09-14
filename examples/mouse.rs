@@ -26,7 +26,7 @@ fn main() {
                 match me {
                     MouseEvent::Press(_, a, b) |
                     MouseEvent::Release(a, b) |
-                    MouseEvent::Hold(a, b) => {
+                    MouseEvent::Drag(_, a, b) => {
                         x = a;
                         y = b;
                     }
